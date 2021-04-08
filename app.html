@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta content="width=device-width, initial-scale=1" name="viewport" />
+  <title>app</title>
+  
+</head>
+<body id="body" class="site">
+<div id="ROOT"></div>
+<script type="text/javascript" src="/app.js"></script>
+<script type="text/javascript">
+var ws = new WebSocket("ws://localhost:8080/ws");
+
+ws.onopen = function(evt) { 
+  console.log("Connection open ..."); 
+  ws.send("Hello WebSockets!");
+};
+
+ws.onmessage = function(evt) {
+  console.log( "Received Message: " + evt.data);
+  if(evt.data == "refresh"){
+    window.location.href = window.location.href
+  }
+};
+
+ws.onclose = function(evt) {
+  console.log("Connection closed.");
+};      
+</script>
+
+</body>
+</html>
