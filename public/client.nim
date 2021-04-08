@@ -1,8 +1,7 @@
 include karax / prelude
-import karax/kajax except fromJson, toJson
+import karax/kajax
 import karax/kdom
-import json, strformat, tables
-import jsony
+import strformat, tables
 import sugar
 import ../model
 var posts: seq[Post]
@@ -13,7 +12,7 @@ type PostView = ref object
 
 var state = initTable[int64, PostView]()
 proc postCreate(status: int, resp: cstring) =
-  posts.add(($resp).fromJson(Post))
+  posts.add fromJson[Post](resp)
 proc render(post: Post, i: int): VNode =
   var this = state.getOrDefault(post.id, PostView())
   state[post.id] = this
@@ -34,7 +33,7 @@ proc render(post: Post, i: int): VNode =
           post.text = $this.content
           this.content = ""
           this.editing = false
-          ajaxPut(&"/posts", @[], $(%post), (status: int, r: cstring) => (posts[i] = ($r).fromJson(Post)))
+          ajaxPut(&"/posts", @[], post.toJson, (status: int, r: cstring) => (posts[i] = fromJson[Post](r)))
     else:
       span: text post.text
       button:
@@ -55,14 +54,14 @@ proc createDom(): VNode =
     button:
       proc onclick() =
         var el = kdom.getElementById("message")
-        var body = %Post(text: $el.value)
+        var body = Post(text: $el.value).toJson
         el.value = ""
         ajaxPost("/posts", @[], $body, postCreate)
       text "Add"
     tdiv: text content
 
 proc getPosts(status: int, resp: cstring) =
-  posts = ($resp).fromJson(seq[Post])
+  posts = fromJson[seq[Post]](resp)
 
 setRenderer createDom
 
