@@ -1,4 +1,5 @@
 import norm/model
+import karax/kbase
 type
   Post* = ref object of Model
-    text*: cstring
+    text*: kstring

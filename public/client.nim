@@ -11,8 +11,6 @@ type PostView = ref object
   content: kstring
 
 var state = initTable[int64, PostView]()
-proc postCreate(status: int, resp: cstring) =
-  posts.add fromJson[Post](resp)
 proc render(post: Post, i: int): VNode =
   var this = state.getOrDefault(post.id, PostView())
   state[post.id] = this
@@ -33,13 +31,15 @@ proc render(post: Post, i: int): VNode =
           post.text = $this.content
           this.content = ""
           this.editing = false
-          ajaxPut(&"/posts", @[], post.toJson, (status: int, r: cstring) => (posts[i] = fromJson[Post](r)))
+          ajaxPut(&"/posts", @[], post.toJson) do (status: int, r: cstring):
+            posts[i] = fromJson[Post](r)
     else:
       span: text post.text
       button:
         text "Delete"
         proc onclick(e: Event, n: VNode) =
-          ajaxDelete(&"/posts/{post.id}", @[], (status: int, r: cstring) => (posts.delete(i)))
+          ajaxDelete(&"/posts/{post.id}", @[]) do (status: int, r: cstring):
+            posts.delete(i)
       button:
         text "Edit"
         proc onclick(e: Event, n: VNode) =
@@ -56,7 +56,8 @@ proc createDom(): VNode =
         var el = kdom.getElementById("message")
         var body = Post(text: $el.value).toJson
         el.value = ""
-        ajaxPost("/posts", @[], $body, postCreate)
+        ajaxPost("/posts", @[], $body) do (status: int, r: cstring):
+          posts.add fromJson[Post](r)
       text "Add"
     tdiv: text content
 
