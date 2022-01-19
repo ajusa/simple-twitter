@@ -11,23 +11,21 @@ converter toString(x: VNode): string = $x
 
 var tweetField = initField(name = "text", widget = defaultTextarea).attrs(placeholder = "Write here")
 
-proc render(post: Post): VNode =
-  buildHtml(tdiv(hx-target="this")):
-    span: text post.text
-    button(hx-delete = &"/posts/{post.id}"): text "Delete"
-    button(hx-get = &"/posts/edit/{post.id}"): text "Edit"
+proc render(post: Post): VNode = buildHtml(form(hx-target="this")):
+  span: text post.text
+  button(hx-delete = &"/posts/{post.id}"): text "Delete"
+  button(hx-get = &"/posts/edit/{post.id}"): text "Edit"
 
-proc renderEdit(post: Post): VNode =
-  buildHtml(form(hx-target="this")):
-    tweetField.render(post.toValues)
-    button(hx-get = &"/posts/{post.id}"): text "Cancel"
-    button(hx-put = &"/posts/{post.id}"): text "Update"
+proc renderEdit(post: Post): VNode = buildHtml(form(hx-target="this")):
+  tweetField.render(post.toValues)
+  button(hx-get = &"/posts/{post.id}"): text "Cancel"
+  button(hx-put = &"/posts/{post.id}"): text "Update"
 
-proc newTweetForm(): VNode =
-  buildHtml(form(id="newtweet", hx-swap-oob="true")):
-    tdiv(id="newtweet"): tweetField.render()
-    br()
-    button(hx-post="/posts", hx-target="#posts", hx-swap="beforeend"): text "Add"
+proc newTweetForm(): VNode = buildHtml(form(id="newtweet", hx-swap-oob="true")):
+  tdiv: tweetField.render()
+  button(hx-post="/posts", hx-target="#posts", hx-swap="beforeend"): text "Add"
+
+proc postById(id: string): Post = Post().dup dbConn.select("id = ?", id)
 
 routes:
   get "/":
@@ -42,9 +40,7 @@ routes:
           for post in posts: post.render()
         newTweetForm()
     resp html
-  get "/posts/@id":
-    var post = Post().dup dbConn.select("id = ?", @"id")
-    resp post.render()
+  get "/posts/@id": resp postById(@"id").render()
   post "/posts":
     var post = request.params.fromValues(Post)
     dbConn.insert(post)
@@ -57,6 +53,4 @@ routes:
     var post = request.params.fromValues(Post)
     dbConn.delete(post)
     resp ""
-  get "/posts/edit/@id":
-    var post = Post().dup dbConn.select("id = ?", @"id")
-    resp post.renderEdit()
+  get "/posts/edit/@id": resp postById(@"id").renderEdit()
