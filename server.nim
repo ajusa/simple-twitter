@@ -16,11 +16,6 @@ proc render(post: Post): string = compileTemplateStr """
     <button hx-get="/posts/edit/{{post.id}}">Edit</button>
   </form>""" 
 
-proc renderEdit(post: Post): string = compileTemplateStr """
-  <textarea placeholder="Write here" name="text">{{post.text}}</textarea>
-  <button hx-get="/posts/{{post.id}}">Cancel</button>
-  <button hx-put="/posts/{{post.id}}">Update</button>""" 
-
 proc newTweetForm(): string = compileTemplateStr """
   <form id="newtweet" hx-swap-oob="true">
     <div><textarea placeholder="Write here" name="text"></textarea></div>
@@ -52,4 +47,9 @@ routes:
   delete "/posts/@id": grab(post, Post):
     dbConn.delete(post)
     resp ""
-  get "/posts/edit/@id": resp byId(Post, @"id").renderEdit()
+  get "/posts/edit/@id":
+    var post = byId(Post, @"id")
+    resp tmpls """
+    <textarea placeholder="Write here" name="text">{{post.text}}</textarea>
+    <button hx-get="/posts/{{post.id}}">Cancel</button>
+    <button hx-put="/posts/{{post.id}}">Update</button>""" 
