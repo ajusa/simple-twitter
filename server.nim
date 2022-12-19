@@ -5,7 +5,6 @@ type Post* = ref object of Model
   text*: string
 let db = open(":memory:", "", "", "")
 db.createTables(Post())
-proc initPost*(text = "", id = 0): Post {.constr.}
 proc view(post: Post) = form:
   hxTarget "this"
   hxVars {"id": post.id}
@@ -15,16 +14,14 @@ proc view(post: Post) = form:
 
 proc getPost(id: int): string =
   render Post().dup(db.select("id = ?", id)).view()
-proc posts(text: string): string = 
+proc posts(post: Post): string = 
   {.cast(gcsafe).}:
-    echo text
-    render: initPost(text).dup(db.insert).view()
-proc updatePost(id: int, text: string): string =
+    render: post.dup(db.insert).view()
+proc updatePost(post: Post): string =
   {.cast(gcsafe).}:
-    render: initPost(text, id).dup(db.update).view()
-proc removePost(id: int) =
-  {.cast(gcsafe).}:
-    discard Post(id: id).dup(db.delete)
+    render: post.dup(db.update).view()
+proc removePost(post: var Post): string =
+  {.cast(gcsafe).}: db.delete(post)
 proc getEditPost(id: int): string = 
   {.cast(gcsafe).}: render:
     let post = Post().dup(db.select("id = ?", id))
@@ -37,7 +34,7 @@ router.post(posts)
 router.post(updatePost)
 router.post(removePost)
 router.get(getEditPost)
-router.autoRoute("GET", "/") do (request: Request) -> string {.gcsafe.}: render: html:
+router.map("GET", "/") do (request: Request) -> string {.gcsafe.}: render: html:
   lang "en"
   head:
     meta: charset "UTF-8"; name "viewport"; attrContent "width=device-width, initial-scale=1"
