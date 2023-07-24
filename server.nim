@@ -19,6 +19,12 @@ proc show(post: Post) = form:
   button: hxGet &"/posts/edit?id={post.id}"; say "Edit"
   button: hxDelete &"/posts?id={post.id}"; say "Delete"
 
+proc new(post: Post) = 
+  post.show()
+  tdiv("#newtweet"): 
+    hxSwapOob "true"
+    Post().form()
+
 proc edit(post: Post) = form:
   post.form()
   button: hxGet &"/posts?id={post.id}"; say "Cancel"
@@ -34,7 +40,7 @@ proc index(posts: seq[Post]) =
     tdiv "#posts":
       for post in posts: post.show()
     form:
-      tdiv: Post().form()
+      tdiv("#newtweet"): Post().form()
       button: hxPost "/posts"; hxTarget "#posts"; hxSwap "beforeend"; say "Add"
 
 proc indexHandler(req: Request): seq[Post] = db.filter(Post)
@@ -52,7 +58,7 @@ proc deleteHandler(req: Request) =
 
 var router: Router
 router.get("/", indexHandler.renderWith(index))
-router.post("/posts", upsertHandler.renderWith(show))
+router.post("/posts", upsertHandler.renderWith(new))
 router.get("/posts/edit", showHandler.renderWith(edit))
 router.patch("/posts", upsertHandler.renderWith(show))
 router.get("/posts", showHandler.renderWith(show))
