@@ -1,5 +1,5 @@
 import strutils, strformat
-import dekao, dekao/[htmx, mummy_utils], mummy, mummy/routers, webby, debby/sqlite
+import dekao, dekao/htmx, mummy, mummy/routers, webby, debby/sqlite, nails, nails/dekao_utils
 
 type Post* = ref object
   id*: int
@@ -7,9 +7,8 @@ type Post* = ref object
 
 let db = openDatabase(":memory:")
 db.createTable(Post)
-db.insert(Post(id: 0, content: "hello world!"))
 
-proc getId(req: Request): int = req.uri.parseUrl.query["id"].parseInt
+proc getId(req: Request): int = req.query["id"].parseInt
 
 proc form(post: Post) = 
   textarea: placeholder "Write here"; name "content"; say post.content
@@ -38,23 +37,12 @@ proc index(posts: seq[Post]) =
       tdiv: Post().form()
       button: hxPost "/posts"; hxTarget "#posts"; hxSwap "beforeend"; say "Add"
 
-proc initPost(req: Request): Post =
-  new result
-  if "id" in req.uri.parseUrl.query: result.id = req.getId()
-  let q = req.body.parseSearch()
-  result.content = q["content"]
-
 proc indexHandler(req: Request): seq[Post] = db.filter(Post)
 
-proc createHandler(req: Request): Post =
-  result = req.initPost()
-  db.insert(result)
-
-proc editHandler(req: Request): Post = db.get(Post, req.getId())
-
-proc updateHandler(req: Request): Post =
-  result = req.initPost()
-  db.update(result)
+proc upsertHandler(req: Request): Post =
+  result = Post(content: req.body.parseSearch["content"])
+  if "id" in req.query: result.id = req.getId()
+  db.upsert(result)
 
 proc showHandler(req: Request): Post = db.get(Post, req.getId())
 
@@ -64,9 +52,9 @@ proc deleteHandler(req: Request) =
 
 var router: Router
 router.get("/", indexHandler.renderWith(index))
-router.post("/posts", createHandler.renderWith(show))
-router.get("/posts/edit", editHandler.renderWith(edit))
-router.patch("/posts", updateHandler.renderWith(show))
+router.post("/posts", upsertHandler.renderWith(show))
+router.get("/posts/edit", showHandler.renderWith(edit))
+router.patch("/posts", upsertHandler.renderWith(show))
 router.get("/posts", showHandler.renderWith(show))
 router.delete("/posts", deleteHandler)
 
