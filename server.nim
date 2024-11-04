@@ -36,7 +36,7 @@ proc index(params: PathParams, posts: seq[Post]): string = render:
   html: lang "en"
   head:
     meta: charset "UTF-8"; name "viewport"; content "width=device-width, initial-scale=1"
-    script: src "https://unpkg.com/htmx.org@1.6.1"
+    script: src "https://unpkg.com/htmx.org@2.0"
     title: say "Simple Twitter"
   body:
     hxBoost "true"
