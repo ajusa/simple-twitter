@@ -57,16 +57,14 @@ router.get "/", proc (req) =
   req.respond(req.pathParams.index(db.filter(Post)))
 
 router.post "/posts", proc (req) = 
-  let post = req.pathParams.toPost(req.body)
-  db.insert(post)
+  db.insert(req.pathParams.toPost(req.body))
   req.redirect("/")
 
 router.get "/posts/@id/edit", proc (req) =
   req.respond(req.pathParams.index(db.filter(Post)))
 
 router.post "/posts/@id", proc (req) =
-  let post = req.pathParams.toPost(req.body)
-  db.update(post)
+  db.update(req.pathParams.toPost(req.body))
   req.redirect("/")
 
 router.post "/posts/@id/delete", proc (req) =
