@@ -1,4 +1,4 @@
-import dekao, dekao/htmx, mummy, mummy/routers, webby, debby/sqlite
+import strformat, strutils, sequtils, mummy, mummy/routers, webby, debby/sqlite
 
 type Post* = ref object
   id*: int
@@ -13,41 +13,39 @@ proc postId(params: PathParams): int = params.getOrDefault("id", "0").parseInt
 proc toPost(params: PathParams, body: string): Post =
   Post(id: params.postId(), content: body.parseSearch["content"])
 
-proc renderForm(post = Post()) =
-  textarea: placeholder "Write here"; name "content"; say post.content
+proc renderForm(post = Post()): string =
+  &"""<textarea placeholder="Write here" name="content">{post.content}</textarea>"""
 
-proc show(post: Post) = form:
-  action "/posts/" & $post.id & "/delete"
-  tmethod "post"
-  span: say post.content & "&nbsp;"
-  a: href "/posts/" & $post.id & "/edit"; say "Edit"
-  button: say "Delete"
+proc show(post: Post): string = &"""
+<form action="/posts/{post.id}/delete" method="post">
+  <span>{post.content}&nbsp;</span>
+  <a href="/posts/{post.id}/edit">Edit</a><button>Delete</button>
+</form>"""
 
-proc edit(post: Post) = 
-  form:
-    action "/posts/" & $post.id
-    tmethod "post"
-    post.renderForm()
-    a: href "/"; say "Cancel"
-    button: say "Update"
+proc edit(post: Post): string = &"""
+<form action="/posts/{post.id}" method="post">
+  {post.renderForm()}
+  <a href="/">Cancel</a><button>Update</button>
+</form>"""
 
-proc index(params: PathParams, posts: seq[Post]): string = render:
-  let id = params.getOrDefault("id", "-1").parseInt
-  html: lang "en"
-  head:
-    meta: charset "UTF-8"; name "viewport"; content "width=device-width, initial-scale=1"
-    script: src "https://unpkg.com/htmx.org@2.0"
-    title: say "Simple Twitter"
-  body:
-    hxBoost "true"
-    for post in posts:
-      if id >= 0 and post.id == id: post.edit()
-      else: post.show()
-    form:
-      action "/posts"
-      tmethod "post"
-      renderForm()
-      button: say "Add"
+proc index(params: PathParams, posts: seq[Post]): string = 
+  let renderedPosts = posts.mapIt(if it.id == params.postId: it.edit() else: it.show()).join
+  &"""
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://unpkg.com/htmx.org@2.0"></script>
+    <title>Simple Twitter</title>
+  </head>
+  <body hx-boost="true">
+    {posts.mapIt(if it.id == params.postId: it.edit() else: it.show()).join}
+    <form action="/posts" method="post">
+      {renderForm()}
+      <button>Add</button>
+    </form>
+  </body>
+</html>"""
 
 using req: Request
 proc respond(req; resp: string) = req.respond(200, @[("Content-Type", "text/html")], resp)
