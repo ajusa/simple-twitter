@@ -1,0 +1,32 @@
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/htmx.org@2.0"></script>
+  <title>Simple Twitter</title>
+</head>
+
+<body hx-boost="true">
+  {% for post in posts %}
+  {% if post.id == params.postId %}
+  <form action="/posts/{post.id}" method="post">
+    <textarea placeholder="Write here" name="content">{{post.content}}</textarea>
+    <a href="/">Cancel</a>
+    <button>Update</button>
+  </form>
+  {% else %}
+  <form action="/posts/{{post.id}}/delete" method="post">
+    <span>{{post.content}}&nbsp;</span>
+    <a href="/posts/{{post.id}}/edit">Edit</a>
+    <button>Delete</button>
+  </form>
+  {% endif %}
+  {% endfor %}
+  <form action="/posts" method="post">
+    <textarea placeholder="Write here" name="content"></textarea>
+    <button>Add</button>
+  </form>
+</body>
+
+</html>
