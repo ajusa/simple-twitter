@@ -1,16 +1,22 @@
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://unpkg.com/htmx.org@2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/unpoly@3.10.2/unpoly.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/unpoly@3.10.2/unpoly.min.css">
+  <script>
+    up.form.config.submitSelectors.push(['form']);
+    up.link.config.followSelectors.push('a[href]');
+  </script>
   <title>Simple Twitter</title>
 </head>
 
-<body hx-boost="true">
+<body>
   {% for post in posts %}
   {% if post.id == params.postId %}
-  <form action="/posts/{post.id}" method="post">
+  <form action="/posts/{{post.id}}" method="post">
     <textarea placeholder="Write here" name="content">{{post.content}}</textarea>
     <a href="/">Cancel</a>
     <button>Update</button>
