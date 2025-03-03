@@ -1,3 +1,5 @@
+#? stdtmpl
+# proc index(params: PathParams, posts: seq[Post]): string =
 <!DOCTYPE html>
 <html lang="en">
 
@@ -14,25 +16,24 @@
 </head>
 
 <body>
-  {% for post in posts %}
-  {% if post.id == params.postId %}
-  <form action="/posts/{{post.id}}" method="post">
-    <textarea placeholder="Write here" name="content">{{post.content}}</textarea>
+  # for post in posts:
+  # if post.id == params.postId:
+  <form action="/posts/$post.id" method="post">
+    <textarea placeholder="Write here" name="content">$post.content</textarea>
     <a href="/">Cancel</a>
     <button>Update</button>
   </form>
-  {% else %}
-  <form action="/posts/{{post.id}}/delete" method="post">
-    <span>{{post.content}}&nbsp;</span>
-    <a href="/posts/{{post.id}}/edit">Edit</a>
+  # else:
+  <form action="/posts/$post.id/delete" method="post">
+    <span>$post.content&nbsp;</span>
+    <a href="/posts/$post.id/edit">Edit</a>
     <button>Delete</button>
   </form>
-  {% endif %}
-  {% endfor %}
+  # end
+  # end
   <form action="/posts" method="post">
     <textarea placeholder="Write here" name="content"></textarea>
     <button>Add</button>
   </form>
 </body>
-
 </html>

@@ -1,4 +1,4 @@
-import strutils, os, mummy, mummy/routers, webby, debby/sqlite, nimja
+import strutils, mummy, mummy/routers, webby, debby/sqlite
 
 type Post* = ref object
   id*: int
@@ -13,12 +13,11 @@ proc postId(params: PathParams): int = params.getOrDefault("id", "0").parseInt
 proc toPost(params: PathParams, body: string): Post =
   Post(id: params.postId(), content: body.parseSearch["content"])
 
-proc index(params: PathParams, posts: seq[Post]): string =
-  tmplf("template.nimja", baseDir = getScriptDir())
-
 using req: Request
 proc respond(req; resp: string) = req.respond(200, @[("Content-Type", "text/html")], resp)
 proc redirect(req; url: string) = req.respond(302, @[("Location", url)])
+
+include "template.html"
 var router: Router
 router.get "/", proc (req) =
   req.respond(req.pathParams.index(db.filter(Post)))
