@@ -1,8 +1,29 @@
 #? stdtmpl
-# proc index(params: PathParams, posts: seq[Post]): string =
+#proc editPostPage(id: int): string =
+#let post = db.get(Post, id = id)
+<form action="${updatePostHandler.link((id: post.id))}" method="post">
+  <textarea placeholder="Write here" name="content">$post.content</textarea>
+  <a href="/">Cancel</a>
+  <button>Update</button>
+</form>
+#end
+#proc homePage(post: Post): string =
+#for post in db.filter(Post):
+<form action="${deletePostHandler.link((id: post.id))}" method="post">
+  <span>$post.content&nbsp;</span>
+  <a href="${editPostPage.link((id: post.id))}" up-target="form">Edit</a>
+  <button>Delete</button>
+</form>
+#end
+<form action="${createPostHandler.link}" method="post">
+  <textarea placeholder="Write here" name="content"></textarea>
+  <button>Add</button>
+</form>
+#end
+#proc respondHook*(request: Request, body: string) =
+#var result = ""
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,28 +33,9 @@
     up.form.config.submitSelectors.push(['form']);
     up.link.config.followSelectors.push('a[href]');
   </script>
-  <title>Simple Twitter</title>
+ <title>Simple Twitter</title>
 </head>
-
-<body>
-  # for post in posts:
-  # if post.id == params.postId:
-  <form action="/posts/$post.id" method="post">
-    <textarea placeholder="Write here" name="content">$post.content</textarea>
-    <a href="/">Cancel</a>
-    <button>Update</button>
-  </form>
-  # else:
-  <form action="/posts/$post.id/delete" method="post">
-    <span>$post.content&nbsp;</span>
-    <a href="/posts/$post.id/edit">Edit</a>
-    <button>Delete</button>
-  </form>
-  # end
-  # end
-  <form action="/posts" method="post">
-    <textarea placeholder="Write here" name="content"></textarea>
-    <button>Add</button>
-  </form>
-</body>
+<body>$body</body>
 </html>
+#request.respond(200, @[("Content-Type", "text/html")], result)
+#end

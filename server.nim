@@ -1,4 +1,4 @@
-import strutils, mummy, mummy/routers, webby, debby/sqlite
+import strutils, mummy, mummy/routers, webby, debby/sqlite, rowdy
 
 type Post* = ref object
   id*: int
@@ -8,34 +8,29 @@ let db = openDatabase(":memory:")
 db.createTable(Post)
 db.insert(Post(content: "hello"))
 
-proc postId(params: PathParams): int = params.getOrDefault("id", "0").parseInt
+proc homePage(post: Post): string {.gcsafe.}
 
-proc toPost(params: PathParams, body: string): Post =
-  Post(id: params.postId(), content: body.parseSearch["content"])
+proc createPostHandler(request: Request, post: Post) =
+  db.insert(post)
+  request.redirect(homePage.link)
 
-using req: Request
-proc respond(req; resp: string) = req.respond(200, @[("Content-Type", "text/html")], resp)
-proc redirect(req; url: string) = req.respond(302, @[("Location", url)])
+proc updatePostHandler(request: Request, id: int, post: Post) =
+  post.id = id
+  db.update(post)
+  request.redirect(homePage.link)
+
+proc deletePostHandler(request: Request, id: int) =
+  db.delete(Post(id: id))
+  request.redirect(homePage.link)
 
 include "template.html"
+
 var router: Router
-router.get "/", proc (req) =
-  req.respond(req.pathParams.index(db.filter(Post)))
-
-router.post "/posts", proc (req) =
-  db.insert(req.pathParams.toPost(req.body))
-  req.redirect("/")
-
-router.get "/posts/@id/edit", proc (req) =
-  req.respond(req.pathParams.index(db.filter(Post)))
-
-router.post "/posts/@id", proc (req) =
-  db.update(req.pathParams.toPost(req.body))
-  req.redirect("/")
-
-router.post "/posts/@id/delete", proc (req) =
-  db.delete(Post(id: req.pathParams.postId))
-  req.redirect("/")
+router.get "/", homePage
+router.get "/posts/@id/edit", editPostPage
+router.post "/", createPostHandler
+router.post "/posts/@id", updatePostHandler
+router.post "/posts/@id/delete", deletePostHandler
 
 echo "Serving on http://localhost:8080"
 newServer(router).serve(Port(8080))
