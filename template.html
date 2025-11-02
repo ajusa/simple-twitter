@@ -1,27 +1,26 @@
-#? stdtmpl
+#? stdtmpl(toString = "safe") | replace(sub="safe(raw|", by="(")
 #proc editPostPage(id: int): string =
 #let post = db.get(Post, id = id)
-<form action="${updatePostHandler.link((id: post.id))}" method="post">
+<form action="posts/$post.id" method="post">
   <textarea placeholder="Write here" name="content">$post.content</textarea>
   <a href="/">Cancel</a>
   <button>Update</button>
 </form>
 #end
-#proc homePage(post: Post): string =
+#proc homePage(): string =
 #for post in db.filter(Post):
-<form action="${deletePostHandler.link((id: post.id))}" method="post">
+<form action="posts/$post.id/delete" method="post">
   <span>$post.content&nbsp;</span>
-  <a href="${editPostPage.link((id: post.id))}" up-target="form">Edit</a>
+  <a href="posts/$post.id/edit" up-target="form">Edit</a>
   <button>Delete</button>
 </form>
 #end
-<form action="${createPostHandler.link}" method="post">
+<form action="/posts" method="post">
   <textarea placeholder="Write here" name="content"></textarea>
   <button>Add</button>
 </form>
 #end
-#proc respondHook*(request: Request, body: string) =
-#var result = ""
+#proc render*(body: string): string =
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,7 +34,6 @@
   </script>
  <title>Simple Twitter</title>
 </head>
-<body>$body</body>
+<body>${raw|body}</body>
 </html>
-#request.respond(200, @[("Content-Type", "text/html")], result)
 #end
