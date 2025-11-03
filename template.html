@@ -1,6 +1,5 @@
 #? stdtmpl(toString = "safe") | replace(sub="safe(raw|", by="(")
-#proc editPostPage(id: int): string =
-#let post = db.get(Post, id = id)
+#proc editPage(post: Post): string =
 <form action="posts/$post.id" method="post">
   <textarea placeholder="Write here" name="content">$post.content</textarea>
   <a href="/">Cancel</a>

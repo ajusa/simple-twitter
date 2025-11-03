@@ -1,4 +1,4 @@
-import strutils, mummy, webby, debby/sqlite, rody, xmltree, macros
+import strutils, mummy, webby, debby/sqlite, rody
 
 type Post* = ref object
   id*: int
@@ -10,23 +10,25 @@ db.insert(Post(content: "hello"))
 
 include "template.html"
 
-var handler = route:
-  find "/": 
+let handler = route:
+  headers["Content-Type"] = "text/html"
+  at "/": 
     get:
       resp render(homePage())
-  find "/posts":
-    var p = Post(content: @"content")
+  at "/posts":
+    var newPost = Post(content: @"content")
     post:
-      db.insert(p)
+      db.insert(newPost)
       redirect "/"
-    find int:
-      p.id = it
-      find "/edit": get:
-        resp render(editPostPage(it))
+    at int:
+      var p = db.get(Post, it)
+      at "/edit": get:
+        resp render(p.editPage())
       post:
-        db.update(p)
+        newPost.id = it
+        db.update(newPost)
         redirect "/"
-      find "/delete": post:
+      at "/delete": post:
         db.delete(p)
         redirect "/"
 
